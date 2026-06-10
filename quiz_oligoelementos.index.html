@@ -1,0 +1,426 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Quiz · Oligoelementos</title>
+<style>
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{min-height:100vh;background:linear-gradient(135deg,#0f2027,#203a43,#2c5364);font-family:'Segoe UI',sans-serif;display:flex;align-items:center;justify-content:center;padding:20px 12px}
+  .card{background:rgba(255,255,255,0.07);backdrop-filter:blur(12px);border-radius:24px;padding:36px 28px;max-width:600px;width:100%;border:1px solid rgba(255,255,255,0.13);box-shadow:0 8px 40px rgba(0,0,0,0.4)}
+  h1{color:#e0f7fa;font-size:26px;font-weight:700;margin:0 0 6px}
+  .sub{color:#80deea;font-size:14px}
+  .section-label{color:#b2dfdb;font-size:13px;margin-bottom:8px;display:block;margin-top:16px}
+  .chip-row{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:4px}
+  .chip{padding:6px 14px;border-radius:20px;border:2px solid rgba(255,255,255,0.2);background:transparent;color:#ccc;font-weight:600;font-size:13px;cursor:pointer;transition:all 0.15s}
+  .chip.active-cyan{border-color:#26c6da;background:rgba(38,198,218,0.2);color:#26c6da}
+  .chip.active-green{border-color:#66bb6a;background:rgba(102,187,106,0.2);color:#66bb6a}
+  .chip.active-orange{border-color:#ffa726;background:rgba(255,167,38,0.2);color:#ffa726}
+  .chip.active-red{border-color:#ef5350;background:rgba(244,67,54,0.2);color:#ef5350}
+  .chip.active-purple{border-color:#ab47bc;background:rgba(171,71,188,0.2);color:#ce93d8}
+  .count-box{background:rgba(0,0,0,0.2);border-radius:12px;padding:12px 18px;margin:18px 0;display:flex;align-items:center;gap:10px}
+  .count-num{color:#26c6da;font-size:30px;font-weight:800}
+  .count-txt{color:#b2dfdb;font-size:14px}
+  .btn{background:linear-gradient(90deg,#00b4d8,#0077b6);color:#fff;border:none;border-radius:14px;padding:13px 36px;font-size:16px;font-weight:700;cursor:pointer;box-shadow:0 4px 18px rgba(0,180,216,0.35);transition:opacity 0.2s}
+  .btn:disabled{opacity:0.4;cursor:default}
+  .btn-sm{background:rgba(255,255,255,0.1);color:#e0f7fa;border:1px solid rgba(255,255,255,0.2);border-radius:12px;padding:10px 22px;font-size:14px;font-weight:600;cursor:pointer}
+  .progress-bar-bg{background:rgba(0,0,0,0.3);border-radius:8px;height:5px;margin-bottom:20px}
+  .progress-bar{background:linear-gradient(90deg,#00b4d8,#26c6da);height:100%;border-radius:8px;transition:width 0.4s ease}
+  .tags{display:flex;gap:8px;margin-bottom:16px}
+  .tag-tipo{border-radius:8px;padding:3px 10px;font-size:12px;font-weight:600}
+  .tag-tema{background:rgba(171,71,188,0.15);color:#ce93d8;border:1px solid rgba(171,71,188,0.4);border-radius:8px;padding:3px 10px;font-size:12px;font-weight:600}
+  .question{color:#e0f7fa;font-size:17px;font-weight:600;margin-bottom:22px;line-height:1.55}
+  .options{display:flex;flex-direction:column;gap:10px;margin-bottom:24px}
+  .opt{background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.12);border-radius:12px;padding:12px 16px;color:#e0f7fa;font-size:14px;font-weight:500;cursor:pointer;text-align:left;transition:all 0.18s;outline:none;line-height:1.4;width:100%}
+  .opt.correct{background:rgba(38,198,218,0.18);border:2px solid #26c6da;color:#26c6da}
+  .opt.wrong{background:rgba(244,67,54,0.18);border:2px solid #ef5350;color:#ef5350}
+  .opt-letter{opacity:0.45;margin-right:8px}
+  .flex-between{display:flex;justify-content:space-between;align-items:center;margin-bottom:10px}
+  .score-txt{color:#26c6da;font-weight:700;font-size:13px}
+  .prog-txt{color:#80deea;font-size:13px}
+  .next-row{display:flex;justify-content:flex-end}
+  /* Results */
+  .result-center{text-align:center;margin-bottom:20px}
+  .result-emoji{font-size:48px}
+  .result-h2{color:#e0f7fa;font-size:24px;margin:6px 0 4px}
+  .result-msg{color:#80deea;font-size:14px}
+  .result-score-box{margin:16px auto;background:rgba(0,0,0,0.3);border-radius:14px;padding:14px 28px;display:inline-block}
+  .result-score-big{font-size:42px;font-weight:800;color:#26c6da}
+  .result-score-den{font-size:18px;color:#b2dfdb}
+  .result-pct{color:#80deea;font-size:13px;margin-top:2px}
+  .by-tema-row{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:16px}
+  .tema-badge{border-radius:10px;padding:6px 12px;font-size:12px;color:#e0f7fa}
+  .errors-list{max-height:220px;overflow-y:auto;display:flex;flex-direction:column;gap:8px;margin-bottom:16px}
+  .error-item{background:rgba(244,67,54,0.1);border-left:3px solid #ef5350;border-radius:8px;padding:10px 14px}
+  .error-q{color:#e0f7fa;font-size:12px;margin-bottom:4px}
+  .error-wrong{color:#ef5350;font-size:11px}
+  .error-right{color:#26c6da;font-size:11px}
+  .btn-row{display:flex;gap:12px;justify-content:center;flex-wrap:wrap}
+  #menu{display:block}
+  #quiz{display:none}
+  #results{display:none}
+  .icon-row{text-align:center;margin-bottom:24px}
+</style>
+</head>
+<body>
+
+<!-- MENU -->
+<div class="card" id="menu">
+  <div class="icon-row">
+    <div style="font-size:52px;margin-bottom:6px">🧬</div>
+    <h1>Quiz: Oligoelementos</h1>
+    <p class="sub" id="total-count"></p>
+  </div>
+
+  <span class="section-label">Filtrar por categoría:</span>
+  <div class="chip-row" id="tipo-chips"></div>
+
+  <span class="section-label">Filtrar por oligoelemento:</span>
+  <div class="chip-row" id="tema-chips"></div>
+
+  <div class="count-box">
+    <span class="count-num" id="filtered-count">0</span>
+    <span class="count-txt">preguntas seleccionadas con tus filtros</span>
+  </div>
+
+  <div style="text-align:center">
+    <button class="btn" id="start-btn" onclick="startQuiz()">Comenzar Quiz →</button>
+  </div>
+</div>
+
+<!-- QUIZ -->
+<div class="card" id="quiz">
+  <div class="flex-between">
+    <span class="prog-txt" id="q-counter"></span>
+    <span class="score-txt" id="q-score"></span>
+  </div>
+  <div class="progress-bar-bg"><div class="progress-bar" id="progress-bar"></div></div>
+  <div class="tags">
+    <span class="tag-tipo" id="tag-tipo"></span>
+    <span class="tag-tema" id="tag-tema"></span>
+  </div>
+  <div class="question" id="question-text"></div>
+  <div class="options" id="options"></div>
+  <div class="next-row">
+    <button class="btn" id="next-btn" onclick="nextQuestion()" style="display:none">Siguiente →</button>
+  </div>
+</div>
+
+<!-- RESULTS -->
+<div class="card" id="results" style="max-width:640px">
+  <div class="result-center">
+    <div class="result-emoji" id="res-emoji"></div>
+    <h2 class="result-h2">Resultado Final</h2>
+    <p class="result-msg" id="res-msg"></p>
+    <div class="result-score-box">
+      <span class="result-score-big" id="res-score"></span>
+      <span class="result-score-den" id="res-den"></span>
+      <div class="result-pct" id="res-pct"></div>
+    </div>
+  </div>
+  <p style="color:#b2dfdb;font-size:13px;margin-bottom:10px">Rendimiento por oligoelemento:</p>
+  <div class="by-tema-row" id="by-tema"></div>
+  <div id="errors-section" style="display:none">
+    <p style="color:#ffa726;font-size:13px;margin-bottom:8px">❌ Preguntas incorrectas:</p>
+    <div class="errors-list" id="errors-list"></div>
+  </div>
+  <div class="btn-row">
+    <button class="btn" onclick="retryQuiz()">Repetir Quiz</button>
+    <button class="btn-sm" onclick="goMenu()">Cambiar filtros</button>
+  </div>
+</div>
+
+<script>
+const ALL_Q = [
+  // AZUFRE
+  {tema:"Azufre",tipo:"Función",q:"¿En qué participa el azufre gracias a la formación de aminoácidos?",o:["Forma glóbulos rojos","Forma proteínas a través de cisteína y metionina","Regula la glucosa en sangre","Produce vitamina B12"],a:1},
+  {tema:"Azufre",tipo:"Función",q:"¿Qué estructuras del cuerpo dependen del azufre por su contenido en queratina?",o:["Huesos y cartílagos","Piel, uñas y cabello","Músculos y tendones","Riñones e hígado"],a:1},
+  {tema:"Azufre",tipo:"Alimentos",q:"¿En qué alimentos se encuentra principalmente el azufre?",o:["Leche, salmón, garbanzos","Huevo, ajo, cebolla, carne de res","Hígado, pescado, leche, huevos","Chocolate, nueces, espinaca"],a:1},
+  {tema:"Azufre",tipo:"Exceso",q:"¿Qué problema de salud puede causar el exceso de azufre al inhalarlo?",o:["Fluorosis dental","Bocio","Problemas respiratorios","Osteoporosis"],a:2},
+  // CALCIO
+  {tema:"Calcio",tipo:"Función",q:"¿Cuál es una función principal del calcio?",o:["Transportar oxígeno","Formar y mantener huesos y dientes fuertes","Regular la glucosa","Producir vitamina B12"],a:1},
+  {tema:"Calcio",tipo:"Función",q:"¿En qué proceso muscular participa el calcio?",o:["Síntesis de proteínas","Contracción muscular y transmisión de impulsos nerviosos","Producción de insulina","Formación de hemoglobina"],a:1},
+  {tema:"Calcio",tipo:"Alimentos",q:"¿Qué alimentos son fuente de calcio?",o:["Carne roja, espinaca, chocolate","Leche y sus derivados, salmón, garbanzos","Hígado, pescado, leche","Sal, aceitunas, algas, mariscos"],a:1},
+  {tema:"Calcio",tipo:"Deficiencia",q:"¿Qué enfermedad ósea se relaciona con la deficiencia de calcio?",o:["Anemia","Bocio","Osteoporosis","Fluorosis"],a:2},
+  {tema:"Calcio",tipo:"Deficiencia",q:"¿Qué síntoma muscular puede aparecer por falta de calcio?",o:["Hipertensión","Calambres musculares","Bocio","Dermatitis"],a:1},
+  {tema:"Calcio",tipo:"Exceso",q:"¿Qué problema cardíaco puede causar el exceso de calcio?",o:["Hipertensión arterial","Alteraciones en el ritmo del corazón","Bocio","Anemia"],a:1},
+  {tema:"Calcio",tipo:"Exceso",q:"¿Qué tipo de cálculos puede formar el exceso de calcio?",o:["Cálculos biliares","Cálculos renales","Cálculos en las articulaciones","Cálculos en el hígado"],a:1},
+  {tema:"Calcio",tipo:"Exceso",q:"¿Qué problema de retención puede causar el exceso de calcio?",o:["Retención de sodio","Retención de líquidos","Retención de glucosa","Retención de hierro"],a:1},
+  // CLORO
+  {tema:"Cloro",tipo:"Función",q:"¿Qué equilibrio ayuda a mantener el cloro en el cuerpo?",o:["Equilibrio hormonal","Equilibrio de líquidos y electrolitos","Equilibrio del calcio","Equilibrio de glucosa"],a:1},
+  {tema:"Cloro",tipo:"Función",q:"¿En qué líquido digestivo forma parte el cloro?",o:["Bilis","Jugo pancreático","Ácido clorhídrico del estómago","Saliva"],a:2},
+  {tema:"Cloro",tipo:"Alimentos",q:"¿En qué alimentos se encuentra el cloro?",o:["Leche, salmón, garbanzos","Sal, aceitunas, algas, mariscos","Hígado, pescado, leche, huevos","Brócoli, cereales, nueces"],a:1},
+  {tema:"Cloro",tipo:"Deficiencia",q:"¿Qué problema estomacal produce la deficiencia de cloro?",o:["Úlcera gástrica","Disminución del ácido clorhídrico del estómago","Reflujo ácido","Gastritis"],a:1},
+  {tema:"Cloro",tipo:"Exceso",q:"¿Qué problema de retención causa el exceso de cloro?",o:["Retención de calcio","Retención de líquidos y deshidratación","Retención de glucosa","Retención de hierro"],a:1},
+  // COBALTO
+  {tema:"Cobalto",tipo:"Función",q:"¿El cobalto forma parte esencial de qué vitamina?",o:["Vitamina A","Vitamina C","Vitamina D","Vitamina B12"],a:3},
+  {tema:"Cobalto",tipo:"Función",q:"¿En qué participa el cobalto junto con la vitamina B12?",o:["Producción de insulina","Producción de glóbulos rojos","Síntesis de proteínas","Regulación del calcio"],a:1},
+  {tema:"Cobalto",tipo:"Alimentos",q:"¿Qué alimentos contienen cobalto?",o:["Sal, aceitunas, algas","Hígado, pescado, leche, huevos","Brócoli, cereales integrales, nueces","Té, sardina, agua, mariscos"],a:1},
+  {tema:"Cobalto",tipo:"Deficiencia",q:"¿Qué tipo de anemia produce la deficiencia de cobalto?",o:["Anemia ferropénica","Anemia por deficiencia de vitamina B12","Anemia hemolítica","Anemia aplásica"],a:1},
+  {tema:"Cobalto",tipo:"Deficiencia",q:"¿Qué síntoma neurológico produce la deficiencia de cobalto?",o:["Bocio","Pérdida de memoria","Fluorosis","Osteoporosis"],a:1},
+  {tema:"Cobalto",tipo:"Exceso",q:"¿Qué sistema puede verse afectado por el exceso de cobalto?",o:["Sistema digestivo","Sistema cardiovascular (problemas cardíacos)","Sistema endocrino","Sistema renal"],a:1},
+  // COBRE
+  {tema:"Cobre",tipo:"Función",q:"¿Qué función cumple el cobre en la producción de energía?",o:["Regula la glucosa","Participa en el funcionamiento de enzimas relacionadas con la producción de energía","Produce insulina","Forma glóbulos blancos"],a:1},
+  {tema:"Cobre",tipo:"Función",q:"¿En qué proteína transportadora de oxígeno interviene el cobre?",o:["Albúmina","Hemoglobina","Ferritina","Mioglobina"],a:1},
+  {tema:"Cobre",tipo:"Alimentos",q:"¿Qué alimentos son fuente de cobre?",o:["Leche, salmón, garbanzos","Mariscos, nueces, hígado, chocolate amargo","Brócoli, cereales, nueces, pollo","Sal, embutidos, mantequilla"],a:1},
+  {tema:"Cobre",tipo:"Deficiencia",q:"¿Qué tipo de anemia provoca la deficiencia de cobre?",o:["Anemia por B12","Anemia ferropénica","Anemia general","Anemia aplásica"],a:2},
+  {tema:"Cobre",tipo:"Deficiencia",q:"¿Qué sistema se ve afectado por falta de cobre?",o:["Sistema linfático","Sistema inmunológico (debilidad)","Sistema endocrino","Sistema nervioso"],a:1},
+  {tema:"Cobre",tipo:"Exceso",q:"¿Qué enfermedad genética causa acumulación de cobre en el hígado?",o:["Enfermedad de Parkinson","Enfermedad de Wilson","Enfermedad de Alzheimer","Enfermedad celíaca"],a:1},
+  {tema:"Cobre",tipo:"Exceso",q:"¿Qué órganos se dañan por el exceso de cobre?",o:["Corazón y pulmones","Hígado y riñones","Páncreas y bazo","Estómago e intestinos"],a:1},
+  // CROMO
+  {tema:"Cromo",tipo:"Función",q:"¿Qué hormona potencia el cromo en su acción?",o:["Adrenalina","Insulina","Glucagón","Tiroxina"],a:1},
+  {tema:"Cromo",tipo:"Función",q:"¿Qué macronutrientes metaboliza el cromo?",o:["Solo proteínas","Carbohidratos, grasas y proteínas","Solo grasas","Solo carbohidratos"],a:1},
+  {tema:"Cromo",tipo:"Función",q:"¿Qué proceso energético regula el cromo?",o:["Producción de vitaminas","Regular los niveles de glucosa en la sangre","Síntesis de hemoglobina","Formación de huesos"],a:1},
+  {tema:"Cromo",tipo:"Alimentos",q:"¿Qué alimentos contienen cromo?",o:["Leche, salmón, garbanzos","Hígado, pescado, frijoles","Brócoli, cereales integrales, nueces, pollo","Sal, embutidos, mantequilla"],a:2},
+  {tema:"Cromo",tipo:"Deficiencia",q:"¿Qué alteración en la sangre puede causar la deficiencia de cromo?",o:["Anemia","Bocio","Alteraciones en los niveles de glucosa en sangre","Osteoporosis"],a:2},
+  {tema:"Cromo",tipo:"Exceso",q:"¿Qué órganos se dañan con el exceso de cromo?",o:["Pulmones y corazón","Hígado y riñones","Páncreas y bazo","Estómago e intestinos"],a:1},
+  // FLÚOR
+  {tema:"Flúor",tipo:"Función",q:"¿Qué estructura dental fortalece el flúor?",o:["La dentina","El esmalte dental","La pulpa","Las encías"],a:1},
+  {tema:"Flúor",tipo:"Función",q:"¿Qué enfermedad dental ayuda a prevenir el flúor?",o:["Gingivitis","Periodontitis","Caries","Absceso dental"],a:2},
+  {tema:"Flúor",tipo:"Función",q:"¿El flúor contribuye al fortalecimiento de qué estructura ósea?",o:["Cartílagos","Los huesos","Los tendones","Los ligamentos"],a:1},
+  {tema:"Flúor",tipo:"Alimentos",q:"¿Qué alimentos son fuente de flúor?",o:["Hígado, pescado, leche","Leche, salmón, garbanzos","Té, sardina, agua, mariscos","Brócoli, cereales, nueces"],a:2},
+  {tema:"Flúor",tipo:"Deficiencia",q:"¿Qué riesgo dental aumenta con la deficiencia de flúor?",o:["Mayor riesgo de gingivitis","Mayor riesgo de caries dentales","Mayor riesgo de abscesos","Mayor riesgo de periodontitis"],a:1},
+  {tema:"Flúor",tipo:"Exceso",q:"¿Cómo se llama la condición dental por exceso de flúor?",o:["Caries","Gingivitis","Fluorosis dental (manchas en los dientes)","Absceso dental"],a:2},
+  // FÓSFORO
+  {tema:"Fósforo",tipo:"Función",q:"¿El fósforo forma parte de qué molécula esencial para la energía celular?",o:["Hemoglobina","ADN solamente","ATP","Insulina"],a:2},
+  {tema:"Fósforo",tipo:"Función",q:"¿Junto a qué mineral trabaja el fósforo para formar huesos y dientes?",o:["Hierro","Calcio","Zinc","Magnesio"],a:1},
+  {tema:"Fósforo",tipo:"Función",q:"¿Qué proceso de energía involucra al fósforo?",o:["Síntesis de proteínas","Almacenamiento y transferencia de energía","Transporte de oxígeno","Producción de hormonas"],a:1},
+  {tema:"Fósforo",tipo:"Alimentos",q:"¿Qué alimentos son ricos en fósforo?",o:["Sal, embutidos, mantequilla","Hígado, espinaca, papaya","Pescado, leche, frijoles, frutos secos","Banano, papa, aguacate"],a:2},
+  {tema:"Fósforo",tipo:"Deficiencia",q:"¿Qué enfermedad ósea puede causar la deficiencia de fósforo?",o:["Osteoporosis","Raquitismo","Fluorosis","Bocio"],a:1},
+  {tema:"Fósforo",tipo:"Deficiencia",q:"¿Qué síntoma muscular da la falta de fósforo?",o:["Calambres","Fatiga y debilidad muscular","Hipertensión","Anemia"],a:1},
+  {tema:"Fósforo",tipo:"Exceso",q:"¿Qué problema renal puede causar el exceso de fósforo?",o:["Cálculos biliares","Problemas renales y acumulación de minerales en tejidos","Hipertensión arterial","Bocio"],a:1},
+  {tema:"Fósforo",tipo:"Exceso",q:"¿Qué problema cardiovascular puede causar el exceso de fósforo?",o:["Arritmias","Problemas cardíacos","Hipertensión arterial","Infarto"],a:1},
+  // HIERRO
+  {tema:"Hierro",tipo:"Función",q:"¿El hierro forma parte de qué proteína que transporta oxígeno?",o:["Albúmina","Ferritina","Hemoglobina","Mioglobina"],a:2},
+  {tema:"Hierro",tipo:"Función",q:"¿En qué proceso del sistema inmune participa el hierro?",o:["Producción de anticuerpos","Funcionamiento del sistema inmunológico","Síntesis de vitaminas","Regulación de glucosa"],a:1},
+  {tema:"Hierro",tipo:"Función",q:"¿En qué proceso energético participa el hierro?",o:["Síntesis de insulina","Producción de energía","Formación de huesos","Regulación del calcio"],a:1},
+  {tema:"Hierro",tipo:"Alimentos",q:"¿Qué alimentos son ricos en hierro?",o:["Leche, salmón, garbanzos","Hígado, espinaca, papaya, carne roja","Chocolate, nueces, remolacha","Sal, aceitunas, algas"],a:1},
+  {tema:"Hierro",tipo:"Deficiencia",q:"¿Qué enfermedad de la sangre produce la deficiencia de hierro?",o:["Leucemia","Anemia","Trombosis","Hemofilia"],a:1},
+  {tema:"Hierro",tipo:"Deficiencia",q:"¿Qué síntoma general caracteriza la deficiencia de hierro?",o:["Bocio","Caries","Fatiga y debilidad","Fluorosis"],a:2},
+  {tema:"Hierro",tipo:"Exceso",q:"¿Qué sistema se puede dañar con el exceso de hierro?",o:["Sistema nervioso","Sistema cardiovascular y digestivo","Sistema endocrino","Sistema linfático"],a:1},
+  {tema:"Hierro",tipo:"Exceso",q:"¿Qué problema hepático puede causar el exceso de hierro?",o:["Cirrosis","Problemas cardíacos y digestivos","Hepatitis","Cálculos biliares"],a:1},
+  // MAGNESIO
+  {tema:"Magnesio",tipo:"Función",q:"¿Qué función muscular cumple el magnesio?",o:["Producir vitamina B12","Contracción y relajación muscular","Formar hemoglobina","Regular el cloro"],a:1},
+  {tema:"Magnesio",tipo:"Función",q:"¿En qué proceso de energía participa el magnesio?",o:["Síntesis de vitamina D","Producción de energía","Transporte de oxígeno","Formación de huesos"],a:1},
+  {tema:"Magnesio",tipo:"Función",q:"¿El magnesio ayuda en el funcionamiento de qué sistema de defensa?",o:["Sistema circulatorio","Sistema inmunológico","Sistema linfático","Sistema endocrino"],a:1},
+  {tema:"Magnesio",tipo:"Alimentos",q:"¿Qué alimentos son ricos en magnesio?",o:["Leche y derivados","Hígado, pescado, leche","Almendras, espinaca, remolacha, chocolate","Sal, aceitunas, algas"],a:2},
+  {tema:"Magnesio",tipo:"Deficiencia",q:"¿Qué enfermedad neurológica se asocia con la falta de magnesio?",o:["Bocio","Epilepsia","Fluorosis","Osteoporosis"],a:1},
+  {tema:"Magnesio",tipo:"Deficiencia",q:"¿Qué enfermedad mental se asocia con la deficiencia de magnesio?",o:["Esquizofrenia","Depresión y Alzheimer","Bipolaridad","Psicosis"],a:1},
+  {tema:"Magnesio",tipo:"Exceso",q:"¿Qué problema muscular puede causar el exceso de magnesio?",o:["Calambres","Hormigueo y debilidad muscular","Espasmos","Parálisis"],a:1},
+  {tema:"Magnesio",tipo:"Exceso",q:"¿Qué problema cardíaco puede causar el exceso de magnesio?",o:["Hipertensión","Arritmias cardíacas graves","Infarto","Trombosis"],a:1},
+  // MANGANESO
+  {tema:"Manganeso",tipo:"Función",q:"¿El manganeso participa en la formación de qué estructura del cuerpo?",o:["Glóbulos rojos","Huesos","Hemoglobina","Insulina"],a:1},
+  {tema:"Manganeso",tipo:"Función",q:"¿En qué funciones biológicas interviene el manganeso además de la formación de huesos?",o:["Transporte de oxígeno","Funciones sexuales y reproductoras","Producción de insulina","Síntesis de vitamina D"],a:1},
+  {tema:"Manganeso",tipo:"Función",q:"¿En qué tipo de reacciones bioquímicas participa el manganeso?",o:["Reacciones hormonales","Formación de enzimas","Síntesis de hemoglobina","Regulación del calcio"],a:1},
+  {tema:"Manganeso",tipo:"Alimentos",q:"¿Qué alimentos contienen manganeso?",o:["Leche y derivados","Hígado, pescado, leche","Nueces, sésamo, chocolate, espinaca, remolacha, piña","Sal, aceitunas, algas"],a:2},
+  {tema:"Manganeso",tipo:"Deficiencia",q:"¿Qué tipo de problemas causa la deficiencia de manganeso?",o:["Bocio y fluorosis","Problemas de crecimiento y epilepsia","Anemia y fatiga","Caries y osteoporosis"],a:1},
+  {tema:"Manganeso",tipo:"Exceso",q:"¿Qué enfermedad neurológica puede causar el exceso de manganeso?",o:["Alzheimer","Parkinson (problemas neurológicos similares)","Epilepsia","Esclerosis múltiple"],a:1},
+  // NÍQUEL
+  {tema:"Níquel",tipo:"Función",q:"¿En qué metabolismo interviene el níquel?",o:["Metabolismo del calcio","Metabolismo del hierro y la formación de glóbulos rojos","Metabolismo del yodo","Metabolismo del sodio"],a:1},
+  {tema:"Níquel",tipo:"Función",q:"¿Qué tipo de enzimas activa el níquel?",o:["Enzimas digestivas","Ciertas enzimas relacionadas con el metabolismo","Enzimas hepáticas","Enzimas renales"],a:1},
+  {tema:"Níquel",tipo:"Alimentos",q:"¿Dónde se encuentra el níquel?",o:["Leche, salmón, garbanzos","Sal, aceitunas, algas","Chocolate, nueces, legumbres, avena","Hígado, pescado, leche, huevos"],a:2},
+  {tema:"Níquel",tipo:"Deficiencia",q:"¿Qué problema en el crecimiento causa la deficiencia de níquel?",o:["Bocio","Problemas de crecimiento","Anemia","Fluorosis"],a:1},
+  {tema:"Níquel",tipo:"Exceso",q:"¿Qué problema cutáneo causa el exceso de níquel?",o:["Fluorosis","Dermatitis","Bocio","Osteoporosis"],a:1},
+  {tema:"Níquel",tipo:"Exceso",q:"¿Qué enfermedad neurológica puede causar el exceso de níquel?",o:["Alzheimer","Epilepsia","Problemas neurológicos similares al Parkinson","Esclerosis múltiple"],a:2},
+  // POTASIO
+  {tema:"Potasio",tipo:"Función",q:"¿Qué función nerviosa cumple el potasio?",o:["Producir vitamina D","Transmisión de impulsos nerviosos","Formar esmalte dental","Transportar oxígeno"],a:1},
+  {tema:"Potasio",tipo:"Función",q:"¿Qué equilibrio regula el potasio en el cuerpo?",o:["Equilibrio del calcio","Equilibrio de líquidos y la presión arterial","Equilibrio del hierro","Equilibrio del yodo"],a:1},
+  {tema:"Potasio",tipo:"Función",q:"¿En qué proceso muscular interviene el potasio?",o:["Síntesis de proteínas musculares","Contracción muscular","Relajación del músculo cardiaco","Producción de mioglobina"],a:1},
+  {tema:"Potasio",tipo:"Alimentos",q:"¿Qué alimentos son fuente de potasio?",o:["Hígado, pescado, leche","Banano, papa, aguacate, espinaca","Sal, embutidos, mantequilla","Chocolate, nueces, remolacha"],a:1},
+  {tema:"Potasio",tipo:"Deficiencia",q:"¿Qué síntoma muscular causa la falta de potasio?",o:["Osteoporosis","Debilidad y calambres musculares","Bocio","Fluorosis"],a:1},
+  {tema:"Potasio",tipo:"Deficiencia",q:"¿Qué efecto cardíaco tiene la deficiencia de potasio?",o:["Hipertensión","Alteraciones del ritmo cardíaco","Bocio","Anemia"],a:1},
+  {tema:"Potasio",tipo:"Exceso",q:"¿Qué problema grave cardiovascular puede causar el exceso de potasio?",o:["Hipertensión arterial","Arritmias cardíacas graves","Infarto","Dermatitis"],a:1},
+  {tema:"Potasio",tipo:"Exceso",q:"¿Qué síntoma muscular extremo puede causar el exceso de potasio?",o:["Calambres","Hormigueo y debilidad muscular","Espasmos involuntarios","Parálisis"],a:1},
+  // SILICIO
+  {tema:"Silicio",tipo:"Función",q:"¿Qué tejido conectivo forma el silicio?",o:["Huesos solamente","Cartílago","Tendones","Ligamentos"],a:1},
+  {tema:"Silicio",tipo:"Función",q:"¿Qué estructuras externas del cuerpo dependen del silicio?",o:["Uñas solamente","Piel, cabello y uñas","Dientes y encías","Cornea y cristalino"],a:1},
+  {tema:"Silicio",tipo:"Alimentos",q:"¿Qué alimentos son fuente de silicio?",o:["Leche, salmón, garbanzos","Avena, arroz integral, pepino, banana","Sal, embutidos, mantequilla","Chocolate, nueces, remolacha"],a:1},
+  {tema:"Silicio",tipo:"Deficiencia",q:"¿Qué problema articular puede causar la deficiencia de silicio?",o:["Osteoporosis","Debilidad en articulaciones","Bocio","Anemia"],a:1},
+  {tema:"Silicio",tipo:"Exceso",q:"¿Qué problema puede causar el exceso de silicio?",o:["Fluorosis","Formación de cálculos renales","Bocio","Hipertensión"],a:1},
+  // SODIO
+  {tema:"Sodio",tipo:"Función",q:"¿Qué equilibrio corporal regula el sodio?",o:["Equilibrio del calcio","Equilibrio de líquidos y electrolitos","Equilibrio del hierro","Equilibrio del yodo"],a:1},
+  {tema:"Sodio",tipo:"Función",q:"¿En qué proceso nervioso interviene el sodio?",o:["Síntesis de proteínas","Transmisión de impulsos nerviosos","Producción de insulina","Formación de hemoglobina"],a:1},
+  {tema:"Sodio",tipo:"Función",q:"¿Qué función muscular cumple el sodio?",o:["Síntesis de proteínas musculares","Contracción muscular","Relajación del músculo","Producción de energía muscular"],a:1},
+  {tema:"Sodio",tipo:"Alimentos",q:"¿Qué alimentos son fuente de sodio?",o:["Hígado, espinaca, papaya","Sal, embutidos, mantequilla, aceitunas","Leche, salmón, garbanzos","Banano, papa, aguacate"],a:1},
+  {tema:"Sodio",tipo:"Deficiencia",q:"¿Qué síntoma mental puede causar la deficiencia de sodio?",o:["Depresión","Confusión y fatiga","Alucinaciones","Ansiedad"],a:1},
+  {tema:"Sodio",tipo:"Deficiencia",q:"¿Qué síntoma muscular causa la falta de sodio?",o:["Rigidez","Debilidad y calambres musculares","Espasmos","Parálisis"],a:1},
+  {tema:"Sodio",tipo:"Exceso",q:"¿Qué enfermedad cardiovascular causa el exceso de sodio?",o:["Arritmias","Hipertensión arterial","Infarto","Trombosis"],a:1},
+  {tema:"Sodio",tipo:"Exceso",q:"¿Qué problema renal causa el exceso de sodio?",o:["Cálculos renales","Retención de líquidos y problemas renales","Insuficiencia renal","Infección renal"],a:1},
+  // YODO
+  {tema:"Yodo",tipo:"Función",q:"¿Qué glándula produce hormonas que dependen del yodo?",o:["Glándula suprarrenal","Glándula tiroides","Glándula paratiroides","Glándula pituitaria"],a:1},
+  {tema:"Yodo",tipo:"Función",q:"¿Qué proceso corporal regulan las hormonas tiroideas producidas gracias al yodo?",o:["La glucosa","El metabolismo","La presión arterial","La temperatura"],a:1},
+  {tema:"Yodo",tipo:"Función",q:"¿El yodo es esencial para el desarrollo de qué sistema en fetos y niños?",o:["Sistema digestivo","Sistema nervioso","Sistema óseo","Sistema muscular"],a:1},
+  {tema:"Yodo",tipo:"Alimentos",q:"¿Qué alimentos son fuente de yodo?",o:["Hígado, espinaca, papaya","Sal yodada, pescado, cebolla, leche","Leche, salmón, garbanzos","Brócoli, cereales, nueces"],a:1},
+  {tema:"Yodo",tipo:"Deficiencia",q:"¿Cómo se llama el agrandamiento de la glándula tiroides por falta de yodo?",o:["Hipertiroidismo","Hipotiroidismo","Bocio","Tiroiditis"],a:2},
+  {tema:"Yodo",tipo:"Deficiencia",q:"¿Qué retraso puede causar la deficiencia de yodo en el desarrollo?",o:["Dislexia","Retraso en el desarrollo intelectual","Autismo","Déficit de atención"],a:1},
+  {tema:"Yodo",tipo:"Deficiencia",q:"¿Qué enfermedad tiroidea ocurre por deficiencia de yodo?",o:["Hipertiroidismo","Hipotiroidismo y retraso en el desarrollo intelectual","Tiroiditis","Cáncer de tiroides"],a:1},
+  {tema:"Yodo",tipo:"Exceso",q:"¿Qué condición tiroidea puede causar el exceso de yodo?",o:["Bocio","Hipertiroidismo","Hipotiroidismo","Tiroiditis"],a:1},
+  {tema:"Yodo",tipo:"Exceso",q:"¿Qué tipo de alteración causa el exceso de yodo en la glándula tiroides?",o:["Agrandamiento","Alteraciones en el funcionamiento de la glándula tiroides","Destrucción de la tiroides","Calcificación"],a:1},
+  // ZINC
+  {tema:"Zinc",tipo:"Función",q:"¿Qué sistema de defensa fortalece el zinc?",o:["Sistema circulatorio","Sistema inmunológico","Sistema linfático","Sistema endocrino"],a:1},
+  {tema:"Zinc",tipo:"Función",q:"¿En qué proceso de reparación del cuerpo ayuda el zinc?",o:["Regeneración de huesos","Cicatrización de heridas","Regeneración hepática","Producción de sangre"],a:1},
+  {tema:"Zinc",tipo:"Función",q:"¿En qué proceso de construcción celular interviene el zinc?",o:["Síntesis de lípidos","Síntesis de proteínas y crecimiento celular","Síntesis de carbohidratos","Síntesis de vitaminas"],a:1},
+  {tema:"Zinc",tipo:"Alimentos",q:"¿Qué alimentos son ricos en zinc?",o:["Sal, embutidos, mantequilla","Carne roja, mariscos, frijoles, nueces","Leche, salmón, garbanzos","Hígado, espinaca, papaya"],a:1},
+  {tema:"Zinc",tipo:"Deficiencia",q:"¿Qué problema inmunológico causa la falta de zinc?",o:["Hipertensión","Bocio","Disminución de las defensas del organismo","Anemia"],a:2},
+  {tema:"Zinc",tipo:"Deficiencia",q:"¿Qué problema de desarrollo causa la falta de zinc?",o:["Osteoporosis","Retraso en el crecimiento","Bocio","Fluorosis"],a:1},
+  {tema:"Zinc",tipo:"Deficiencia",q:"¿Qué problema en la piel causa la deficiencia de zinc?",o:["Dermatitis","Mala cicatrización","Acné","Psoriasis"],a:1},
+  {tema:"Zinc",tipo:"Exceso",q:"¿Qué mineral cuya absorción disminuye con el exceso de zinc?",o:["Calcio","Cobre","Hierro","Magnesio"],a:1},
+  {tema:"Zinc",tipo:"Exceso",q:"¿Qué síntoma gastrointestinal causa el exceso de zinc?",o:["Estreñimiento","Náuseas y vómitos","Diarrea crónica","Úlcera gástrica"],a:1},
+  {tema:"Zinc",tipo:"Exceso",q:"¿Qué alteraciones causa el exceso de zinc en el sistema inmune?",o:["Alergias","Alteraciones inmunológicas","Autoinmunidad","Infecciones frecuentes"],a:1},
+];
+
+const TIPOS = ["Todos","Función","Alimentos","Deficiencia","Exceso"];
+const TEMAS = ["Todos","Azufre","Calcio","Cloro","Cobalto","Cobre","Cromo","Flúor","Fósforo","Hierro","Magnesio","Manganeso","Níquel","Potasio","Silicio","Sodio","Yodo","Zinc"];
+const TIPO_COLORS = {Función:"#26c6da",Alimentos:"#66bb6a",Deficiencia:"#ffa726",Exceso:"#ef5350"};
+const TIPO_CLASS = {Función:"active-cyan",Alimentos:"active-green",Deficiencia:"active-orange",Exceso:"active-red"};
+
+let filterTipo = "Todos", filterTema = "Todos";
+let questions = [], current = 0, score = 0, selected = null, answered = [];
+
+function shuffle(a){return [...a].sort(()=>Math.random()-0.5);}
+
+function getFiltered(){
+  return ALL_Q.filter(q=>
+    (filterTipo==="Todos"||q.tipo===filterTipo)&&
+    (filterTema==="Todos"||q.tema===filterTema)
+  );
+}
+
+function buildMenu(){
+  document.getElementById("total-count").textContent = ALL_Q.length+" preguntas · 17 minerales · funciones, alimentos, deficiencias y excesos";
+  // Tipo chips
+  const tc = document.getElementById("tipo-chips");
+  tc.innerHTML="";
+  TIPOS.forEach(t=>{
+    const b=document.createElement("button");
+    b.className="chip"+(filterTipo===t?" "+(TIPO_CLASS[t]||"active-cyan"):"");
+    b.textContent=t;
+    b.onclick=()=>{filterTipo=t;buildMenu();};
+    tc.appendChild(b);
+  });
+  // Tema chips
+  const tmc = document.getElementById("tema-chips");
+  tmc.innerHTML="";
+  TEMAS.forEach(t=>{
+    const b=document.createElement("button");
+    b.className="chip"+(filterTema===t?" active-purple":"");
+    b.textContent=t;
+    b.onclick=()=>{filterTema=t;buildMenu();};
+    tmc.appendChild(b);
+  });
+  const n=getFiltered().length;
+  document.getElementById("filtered-count").textContent=n;
+  document.getElementById("start-btn").disabled=n===0;
+}
+
+function startQuiz(){
+  questions=shuffle(getFiltered());
+  current=0; score=0; selected=null; answered=[];
+  show("quiz");
+  renderQuestion();
+}
+
+function renderQuestion(){
+  const q=questions[current];
+  document.getElementById("q-counter").textContent=`Pregunta ${current+1} de ${questions.length}`;
+  document.getElementById("q-score").textContent=`✓ ${score} correctas`;
+  document.getElementById("progress-bar").style.width=`${(current/questions.length)*100}%`;
+  const tt=document.getElementById("tag-tipo");
+  tt.textContent=q.tipo;
+  tt.style.background=(TIPO_COLORS[q.tipo]||"#26c6da")+"22";
+  tt.style.color=TIPO_COLORS[q.tipo]||"#26c6da";
+  tt.style.border=`1px solid ${TIPO_COLORS[q.tipo]||"#26c6da"}55`;
+  document.getElementById("tag-tema").textContent=q.tema;
+  document.getElementById("question-text").textContent=q.q;
+  const opts=document.getElementById("options");
+  opts.innerHTML="";
+  q.o.forEach((opt,i)=>{
+    const b=document.createElement("button");
+    b.className="opt";
+    b.innerHTML=`<span class="opt-letter">${["A","B","C","D"][i]}.</span>${opt}`;
+    b.onclick=()=>handleSelect(i);
+    opts.appendChild(b);
+  });
+  document.getElementById("next-btn").style.display="none";
+  selected=null;
+}
+
+function handleSelect(idx){
+  if(selected!==null)return;
+  selected=idx;
+  const q=questions[current];
+  const correct=idx===q.a;
+  if(correct)score++;
+  answered.push({q:q.q,tema:q.tema,tipo:q.tipo,selected:idx,correctIdx:q.a,options:q.o,isCorrect:correct});
+  const btns=document.getElementById("options").querySelectorAll(".opt");
+  btns.forEach((b,i)=>{
+    b.onclick=null;
+    if(i===q.a)b.classList.add("correct");
+    else if(i===idx&&!correct)b.classList.add("wrong");
+  });
+  const nb=document.getElementById("next-btn");
+  nb.textContent=current+1>=questions.length?"Ver resultados →":"Siguiente →";
+  nb.style.display="inline-block";
+}
+
+function nextQuestion(){
+  if(current+1>=questions.length){showResults();return;}
+  current++;
+  renderQuestion();
+}
+
+function showResults(){
+  show("results");
+  const pct=Math.round((score/questions.length)*100);
+  document.getElementById("res-emoji").textContent=pct>=80?"🏆":pct>=50?"👍":"📚";
+  document.getElementById("res-msg").textContent=pct>=80?"¡Dominas los oligoelementos!":pct>=50?"¡Buen intento, sigue practicando!":"Repasa el material e inténtalo de nuevo.";
+  document.getElementById("res-score").textContent=score;
+  document.getElementById("res-den").textContent="/"+questions.length;
+  document.getElementById("res-pct").textContent=pct+"% correcto";
+  // By tema
+  const byTema={};
+  answered.forEach(a=>{
+    if(!byTema[a.tema])byTema[a.tema]={c:0,t:0};
+    byTema[a.tema].t++;
+    if(a.isCorrect)byTema[a.tema].c++;
+  });
+  const bt=document.getElementById("by-tema");
+  bt.innerHTML="";
+  Object.entries(byTema).forEach(([tema,{c,t}])=>{
+    const p=Math.round((c/t)*100);
+    const d=document.createElement("div");
+    d.className="tema-badge";
+    const col=p>=80?"38,198,218":p>=50?"255,167,38":"244,67,54";
+    d.style.background=`rgba(${col},0.15)`;
+    d.style.border=`1px solid rgba(${col},0.4)`;
+    d.innerHTML=`<b>${tema}</b> ${c}/${t}`;
+    bt.appendChild(d);
+  });
+  // Errors
+  const errs=answered.filter(a=>!a.isCorrect);
+  const es=document.getElementById("errors-section");
+  if(errs.length>0){
+    es.style.display="block";
+    const el=document.getElementById("errors-list");
+    el.innerHTML="";
+    errs.forEach(a=>{
+      const d=document.createElement("div");
+      d.className="error-item";
+      d.innerHTML=`<div class="error-q"><b>[${a.tema} · ${a.tipo}]</b> ${a.q}</div><div class="error-wrong">✗ Tu respuesta: ${a.options[a.selected]}</div><div class="error-right">✓ Correcto: ${a.options[a.correctIdx]}</div>`;
+      el.appendChild(d);
+    });
+  } else es.style.display="none";
+}
+
+function retryQuiz(){startQuiz();}
+function goMenu(){show("menu");buildMenu();}
+
+function show(id){
+  ["menu","quiz","results"].forEach(s=>document.getElementById(s).style.display=s===id?"block":"none");
+}
+
+// Init
+buildMenu();
+</script>
+</body>
+</html>
